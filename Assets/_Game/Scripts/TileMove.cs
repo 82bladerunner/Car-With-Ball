@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class TileMove : MonoBehaviour
@@ -22,21 +23,28 @@ public class TileMove : MonoBehaviour
         waitCounter = waitTime;
     }
 
-    void OnTriggerEnter(Collider other)
+    private void OnTriggerEnter(Collider other)
     {
-        // Don't parent triggers or static objects
-        if (!other.isTrigger && !other.gameObject.isStatic)
+        if (other.transform.TryGetComponent(out CarReferences carReferences))
         {
-            other.transform.SetParent(transform);
+            // carReferences.rigidbody.velocity = Vector3.zero;
+            // carReferences.rigidbody.angularVelocity = Vector3.zero;
+            
+            foreach (var wc in carReferences.wheelColliders)
+            {
+                wc.motorTorque = 0;
+                wc.brakeTorque = 0;
+            }
+            
+            carReferences.holderObject.SetParent(transform);
         }
     }
 
-    void OnTriggerExit(Collider other)
+    private void OnTriggerExit(Collider other)
     {
-        // Unparent objects that leave the platform
-        if (other.transform.parent == transform)
+        if (other.transform.TryGetComponent(out CarReferences carReferences))
         {
-            other.transform.SetParent(null);
+            carReferences.holderObject.SetParent(null);
         }
     }
 
