@@ -5,95 +5,31 @@ using UnityEngine;
 public class CameraFollow : MonoBehaviour {
 
 	public Transform carTransform;
-	[Range(1, 20)]
-	public float followSpeed = 8;
-	[Range(1, 20)]
-	public float lookSpeed = 12;
-	
-	[Header("Isometric Settings")]
-	public float cameraDistance = 20f;
-	public float cameraHeight = 15f;
-	
-	[Header("FOV Settings")]
-	public float baseFOV = 60f;
-	public float maxFOVIncrease = 15f;
-	public float maxSpeed = 100f; // Speed at which FOV reaches maximum
-	
-	private Camera cam;
-	private int currentAngleIndex = 0;
-	private float[] viewAngles = new float[] { 45f, 135f, 225f, 315f }; // Four isometric views
-	
-	private Vector3 currentOffset;
-	private bool cinematicView = false;
-	private float cinematicTimer = 0f;
-	private int currentViewIndex = 0;
-	
-	private enum CameraViews
-	{
-		FarRear,
-		CloseRear,
-		BirdView,
-		Front,
-		Cinematic
-	}
-
-	public Rigidbody carRigidbody; // Assign the car's rigidbody in inspector
-	private float driftOffset = 3.0f; // How far the camera shifts during drifts
+	[Range(1, 10)]
+	public float followSpeed = 2;
+	[Range(1, 10)]
+	public float lookSpeed = 5;
+	Vector3 initialCameraPosition;
+	Vector3 initialCarPosition;
+	Vector3 absoluteInitCameraPosition;
 
 	void Start(){
-		cam = GetComponent<Camera>();
-		currentViewIndex = 0;
-		
-		// Automatically get the Rigidbody from the car
-		carRigidbody = carTransform.GetComponent<Rigidbody>();
-		if (carRigidbody == null) {
-			Debug.LogError("No Rigidbody found on the car! Please add a Rigidbody component to your car.");
-		}
-		
-		// Set initial rotation
-		transform.rotation = Quaternion.Euler(45f, viewAngles[currentAngleIndex], 0f);
-	}
-
-	void Update()
-	{
-		// Change view angle when V is pressed
-		if (Input.GetKeyDown(KeyCode.V))
-		{
-			currentAngleIndex = (currentAngleIndex + 1) % viewAngles.Length;
-		}
+		initialCameraPosition = gameObject.transform.position;
+		initialCarPosition = carTransform.position;
+		absoluteInitCameraPosition = initialCameraPosition - initialCarPosition;
 	}
 
 	void FixedUpdate()
 	{
-		UpdateIsometricCamera();
-		UpdateFOV();
+		//Look at car
+		Vector3 _lookDirection = (new Vector3(carTransform.position.x, carTransform.position.y, carTransform.position.z)) - transform.position;
+		Quaternion _rot = Quaternion.LookRotation(_lookDirection, Vector3.up);
+		transform.rotation = Quaternion.Lerp(transform.rotation, _rot, lookSpeed * Time.deltaTime);
+
+		//Move to car
+		Vector3 _targetPos = absoluteInitCameraPosition + carTransform.transform.position;
+		transform.position = Vector3.Lerp(transform.position, _targetPos, followSpeed * Time.deltaTime);
+
 	}
 
-	void UpdateIsometricCamera() {
-		float currentAngle = viewAngles[currentAngleIndex];
-		Vector3 direction = Quaternion.Euler(0, currentAngle, 0) * Vector3.forward;
-		
-		// Calculate base position
-		Vector3 targetPosition = carTransform.position;
-		targetPosition -= direction * cameraDistance;
-		targetPosition += Vector3.up * cameraHeight;
-		
-		// Add subtle drift compensation
-		float speed = carRigidbody.velocity.magnitude;
-		Vector3 velocityDirection = speed > 1f ? carRigidbody.velocity.normalized : transform.forward;
-		Vector3 driftComp = Vector3.Cross(Vector3.up, velocityDirection) * (driftOffset * Mathf.Min(speed / 30f, 1f));
-		targetPosition += driftComp;
-		
-		// Smooth movement
-		transform.position = Vector3.Lerp(transform.position, targetPosition, followSpeed * Time.deltaTime);
-		Quaternion targetRotation = Quaternion.Euler(45f, currentAngle, 0f);
-		transform.rotation = Quaternion.Lerp(transform.rotation, targetRotation, lookSpeed * Time.deltaTime);
-	}
-
-	void UpdateFOV() {
-		float speed = carRigidbody.velocity.magnitude;
-		float speedRatio = Mathf.Clamp01(speed / maxSpeed);
-		float targetFOV = baseFOV + (maxFOVIncrease * speedRatio);
-		cam.fieldOfView = Mathf.Lerp(cam.fieldOfView, targetFOV, Time.deltaTime * 5f);
-	}
 }
