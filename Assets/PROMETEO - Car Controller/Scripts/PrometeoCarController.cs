@@ -22,24 +22,18 @@ public class PrometeoCarController : MonoBehaviour
       [Space(20)]
       //[Header("CAR SETUP")]
       [Space(10)]
-      [Range(20, 190)]
-      public int maxSpeed = 90; //The maximum speed that the car can reach in km/h.
-      [Range(10, 120)]
-      public int maxReverseSpeed = 45; //The maximum speed that the car can reach while going on reverse in km/h.
-      [Range(1, 10)]
-      public int accelerationMultiplier = 2; // How fast the car can accelerate. 1 is a slow acceleration and 10 is the fastest.
-      [Space(10)]
-      [Range(10, 45)]
-      public int maxSteeringAngle = 27; // The maximum angle that the tires can reach while rotating the steering wheel.
-      [Range(0.1f, 1f)]
-      public float steeringSpeed = 0.5f; // How fast the steering wheel turns.
-      [Space(10)]
-      [Range(100, 600)]
-      public int brakeForce = 350; // The strength of the wheel brakes.
-      [Range(1, 10)]
-      public int decelerationMultiplier = 2; // How fast the car decelerates when the user is not using the throttle.
-      [Range(1, 10)]
-      public int handbrakeDriftMultiplier = 5; // How much grip the car loses when the user hit the handbrake.
+      [Header("Car Setup")]
+      [Range(20, 500)] public float motorForce = 50f;
+      [Range(10, 180)] public int maxSteeringAngle = 27;
+      [Range(0.1f, 1f)] public float steeringSpeed = 0.5f;
+      [Range(100, 1000)] public int brakeForce = 350;
+      [Range(0, 500)] public int maxSpeed = 90;
+      [Range(0, 300)] public int maxReverseSpeed = 45;
+      [Range(1, 100)] public int accelerationMultiplier = 2;
+      [Range(1, 100)] public int decelerationMultiplier = 2;
+      [Range(1, 10)] public int handbrakeDriftMultiplier = 5;
+      [Range(0, 100)] public float steeringMultiplier = 1f;       // Changed from 10 to 100
+      [Range(0, 100)] public float driftMultiplier = 1f;          // Changed from 10 to 100
       [Space(10)]
       public Vector3 bodyMassCenter; // This is a vector that contains the center of mass of the car. I recommend to set this value
                                     // in the points x = 0 and z = 0 of your car. You can select the value that you want in the y axis,
@@ -157,6 +151,19 @@ public class PrometeoCarController : MonoBehaviour
       float RLWextremumSlip;
       WheelFrictionCurve RRwheelFriction;
       float RRWextremumSlip;
+      private Vector3 initialPosition;
+      private Quaternion initialRotation;
+
+    // Add these variables back at the top with other private variables
+    private CarReferences carRefs;
+    private List<CarSnapshot> recordedData = new List<CarSnapshot>();
+    private float recordStartTime;
+    private bool isRecording = false;
+    private GameObject ghostCarPrefab;
+
+    [Header("Wheel Drive Settings")]
+    [Range(0, 1)] public float frontWheelDriveFactor = 0.5f;  // How much power goes to front wheels
+    [Range(0, 1)] public float rearWheelDriveFactor = 0.5f;   // How much power goes to rear wheels
 
     // Start is called before the first frame update
     void Start()
@@ -260,6 +267,13 @@ public class PrometeoCarController : MonoBehaviour
           }
         }
 
+        // Store initial position and rotation
+        initialPosition = transform.position;
+        initialRotation = transform.rotation;
+
+        carRefs = GetComponent<CarReferences>();
+        ghostCarPrefab = gameObject;
+        StartRecording();
     }
 
     // Update is called once per frame
@@ -369,6 +383,27 @@ public class PrometeoCarController : MonoBehaviour
       // We call the method AnimateWheelMeshes() in order to match the wheel collider movements with the 3D meshes of the wheels.
       AnimateWheelMeshes();
 
+      // Record position and rotation if recording is active
+      if (isRecording)
+      {
+          recordedData.Add(new CarSnapshot(
+              transform.position,
+              transform.rotation,
+              Time.time - recordStartTime
+          ));
+      }
+
+      // Change back to R key for reset
+      if (Input.GetKeyDown(KeyCode.R))
+      {
+          ResetCar();
+      }
+
+      // Auto-reset if car falls below certain Y position
+      if (transform.position.y < -10f)  // Adjust this value based on your level
+      {
+          ResetCar();
+      }
     }
 
     // This method converts the car speed data from float to string, and then set the text of the UI carSpeedText with this value.
@@ -520,13 +555,13 @@ public class PrometeoCarController : MonoBehaviour
         if(Mathf.RoundToInt(carSpeed) < maxSpeed){
           //Apply positive torque in all wheels to go forward if maxSpeed has not been reached.
           frontLeftCollider.brakeTorque = 0;
-          frontLeftCollider.motorTorque = (accelerationMultiplier * 50f) * throttleAxis;
+          frontLeftCollider.motorTorque = (accelerationMultiplier * 50f) * throttleAxis * frontWheelDriveFactor;
           frontRightCollider.brakeTorque = 0;
-          frontRightCollider.motorTorque = (accelerationMultiplier * 50f) * throttleAxis;
+          frontRightCollider.motorTorque = (accelerationMultiplier * 50f) * throttleAxis * frontWheelDriveFactor;
           rearLeftCollider.brakeTorque = 0;
-          rearLeftCollider.motorTorque = (accelerationMultiplier * 50f) * throttleAxis;
+          rearLeftCollider.motorTorque = (accelerationMultiplier * 50f) * throttleAxis * rearWheelDriveFactor;
           rearRightCollider.brakeTorque = 0;
-          rearRightCollider.motorTorque = (accelerationMultiplier * 50f) * throttleAxis;
+          rearRightCollider.motorTorque = (accelerationMultiplier * 50f) * throttleAxis * rearWheelDriveFactor;
         }else {
           // If the maxSpeed has been reached, then stop applying torque to the wheels.
           // IMPORTANT: The maxSpeed variable should be considered as an approximation; the speed of the car
@@ -564,13 +599,13 @@ public class PrometeoCarController : MonoBehaviour
         if(Mathf.Abs(Mathf.RoundToInt(carSpeed)) < maxReverseSpeed){
           //Apply negative torque in all wheels to go in reverse if maxReverseSpeed has not been reached.
           frontLeftCollider.brakeTorque = 0;
-          frontLeftCollider.motorTorque = (accelerationMultiplier * 50f) * throttleAxis;
+          frontLeftCollider.motorTorque = (accelerationMultiplier * 50f) * throttleAxis * frontWheelDriveFactor;
           frontRightCollider.brakeTorque = 0;
-          frontRightCollider.motorTorque = (accelerationMultiplier * 50f) * throttleAxis;
+          frontRightCollider.motorTorque = (accelerationMultiplier * 50f) * throttleAxis * frontWheelDriveFactor;
           rearLeftCollider.brakeTorque = 0;
-          rearLeftCollider.motorTorque = (accelerationMultiplier * 50f) * throttleAxis;
+          rearLeftCollider.motorTorque = (accelerationMultiplier * 50f) * throttleAxis * rearWheelDriveFactor;
           rearRightCollider.brakeTorque = 0;
-          rearRightCollider.motorTorque = (accelerationMultiplier * 50f) * throttleAxis;
+          rearRightCollider.motorTorque = (accelerationMultiplier * 50f) * throttleAxis * rearWheelDriveFactor;
         }else {
           //If the maxReverseSpeed has been reached, then stop applying torque to the wheels.
           // IMPORTANT: The maxReverseSpeed variable should be considered as an approximation; the speed of the car
@@ -591,7 +626,7 @@ public class PrometeoCarController : MonoBehaviour
       rearRightCollider.motorTorque = 0;
     }
 
-    // The following method decelerates the speed of the car according to the decelerationMultiplier variable, where
+    // This method decelerates the speed of the car according to the decelerationMultiplier variable, where
     // 1 is the slowest and 10 is the fastest deceleration. This method is called by the function InvokeRepeating,
     // usually every 0.1f when the user is not pressing W (throttle), S (reverse) or Space bar (handbrake).
     public void DecelerateCar(){
@@ -771,4 +806,49 @@ public class PrometeoCarController : MonoBehaviour
       }
     }
 
+    private void ResetCar()
+    {
+        if (carRefs == null || carRefs.carRigidbody == null) return;
+        
+        // Spawn ghost car before resetting
+        SpawnGhostCar();
+        
+        // Reset position and rotation
+        transform.position = carRefs.respawnPosition;
+        transform.rotation = Quaternion.identity;
+        
+        // Reset physics
+        carRefs.carRigidbody.velocity = Vector3.zero;
+        carRefs.carRigidbody.angularVelocity = Vector3.zero;
+        
+        // Start new recording
+        StartRecording();
+    }
+
+    private void StartRecording()
+    {
+        recordedData.Clear();
+        recordStartTime = Time.time;
+        isRecording = true;
+    }
+
+    private void SpawnGhostCar()
+    {
+        if (recordedData.Count > 0)
+        {
+            // Instantiate ghost car
+            GameObject ghostCar = Instantiate(ghostCarPrefab, recordedData[0].position, recordedData[0].rotation);
+            
+            // Remove any unnecessary components from ghost car
+            Destroy(ghostCar.GetComponent<PrometeoCarController>());
+            Destroy(ghostCar.GetComponent<Rigidbody>());
+            foreach (Collider col in ghostCar.GetComponentsInChildren<Collider>())
+            {
+                Destroy(col);
+            }
+
+            // Add and initialize ghost car component
+            ghostCar.AddComponent<GhostCar>().Initialize(recordedData);
+        }
+    }
 }

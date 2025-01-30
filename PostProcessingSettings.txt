@@ -1,0 +1,14 @@
+Bloom:
+- Intensity: 1.5
+- Threshold: 1
+- Scatter: 0.7
+
+Color Grading:
+- Temperature: 5
+- Tint: 5
+- Post-exposure: 0.5
+- Saturation: 10
+
+Vignette:
+- Intensity: 0.4
+- Smoothness: 0.4 

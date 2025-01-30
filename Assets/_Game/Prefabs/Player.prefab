@@ -364,7 +364,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 2d997c6d92b71154e8dee74617594aea, type: 2}
+  - {fileID: 2100000, guid: b2911ddcbab422d4eb2bda8ddcb6630d, type: 2}
   - {fileID: 2100000, guid: 975b4d94cd15da34d833f64957a8479a, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
@@ -734,6 +734,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6293455062805538676}
   - component: {fileID: 6293455062805538677}
+  - component: {fileID: 3839281496578634076}
   m_Layer: 0
   m_Name: Right Headlight
   m_TagString: Untagged
@@ -818,6 +819,26 @@ Light:
   m_UseViewFrustumForShadowCasterCull: 1
   m_ShadowRadius: 0
   m_ShadowAngle: 0
+--- !u!114 &3839281496578634076
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6293455062805538679}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 474bcb49853aa07438625e644c072ee6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Version: 1
+  m_UsePipelineSettings: 1
+  m_AdditionalLightsShadowResolutionTier: 2
+  m_LightLayerMask: 1
+  m_CustomShadowLayers: 0
+  m_ShadowLayerMask: 1
+  m_LightCookieSize: {x: 1, y: 1}
+  m_LightCookieOffset: {x: 0, y: 0}
 --- !u!1 &6293455063569948750
 GameObject:
   m_ObjectHideFlags: 0
@@ -886,6 +907,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6293455063713398395}
   - component: {fileID: 6293455063713398392}
+  - component: {fileID: 5668144271541046897}
   m_Layer: 0
   m_Name: Right Brakelight
   m_TagString: Car
@@ -970,6 +992,26 @@ Light:
   m_UseViewFrustumForShadowCasterCull: 1
   m_ShadowRadius: 0
   m_ShadowAngle: 0
+--- !u!114 &5668144271541046897
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6293455063713398394}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 474bcb49853aa07438625e644c072ee6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Version: 1
+  m_UsePipelineSettings: 1
+  m_AdditionalLightsShadowResolutionTier: 2
+  m_LightLayerMask: 1
+  m_CustomShadowLayers: 0
+  m_ShadowLayerMask: 1
+  m_LightCookieSize: {x: 1, y: 1}
+  m_LightCookieOffset: {x: 0, y: 0}
 --- !u!1 &6293455063750399115
 GameObject:
   m_ObjectHideFlags: 0
@@ -980,6 +1022,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6293455063750399112}
   - component: {fileID: 6293455063750399113}
+  - component: {fileID: 1973584796521332875}
   m_Layer: 0
   m_Name: Left Brakelight
   m_TagString: Untagged
@@ -1064,6 +1107,26 @@ Light:
   m_UseViewFrustumForShadowCasterCull: 1
   m_ShadowRadius: 0
   m_ShadowAngle: 0
+--- !u!114 &1973584796521332875
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6293455063750399115}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 474bcb49853aa07438625e644c072ee6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Version: 1
+  m_UsePipelineSettings: 1
+  m_AdditionalLightsShadowResolutionTier: 2
+  m_LightLayerMask: 1
+  m_CustomShadowLayers: 0
+  m_ShadowLayerMask: 1
+  m_LightCookieSize: {x: 1, y: 1}
+  m_LightCookieOffset: {x: 0, y: 0}
 --- !u!1 &6293455064556613008
 GameObject:
   m_ObjectHideFlags: 0
@@ -1074,6 +1137,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6293455064556613009}
   - component: {fileID: 6293455064556613014}
+  - component: {fileID: 6611897433825908078}
   m_Layer: 0
   m_Name: Left Headlight
   m_TagString: Untagged
@@ -1158,6 +1222,26 @@ Light:
   m_UseViewFrustumForShadowCasterCull: 1
   m_ShadowRadius: 0
   m_ShadowAngle: 0
+--- !u!114 &6611897433825908078
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6293455064556613008}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 474bcb49853aa07438625e644c072ee6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Version: 1
+  m_UsePipelineSettings: 1
+  m_AdditionalLightsShadowResolutionTier: 2
+  m_LightLayerMask: 1
+  m_CustomShadowLayers: 0
+  m_ShadowLayerMask: 1
+  m_LightCookieSize: {x: 1, y: 1}
+  m_LightCookieOffset: {x: 0, y: 0}
 --- !u!1 &7129756345993614873
 GameObject:
   m_ObjectHideFlags: 0
@@ -1226,13 +1310,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 84a035516e157cf48a2f81d721596049, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  <rigidbody>k__BackingField: {fileID: 6413365319973348244}
+  <carRigidbody>k__BackingField: {fileID: 0}
   <holderObject>k__BackingField: {fileID: 2153118423936703885}
   <wheelColliders>k__BackingField:
   - {fileID: 96698797482817368}
   - {fileID: 8291264314173735394}
   - {fileID: 7625416419346668084}
   - {fileID: 7392562468656616259}
+  bodyMeshRenderer: {fileID: 0}
+  wheelMeshRenderers: []
 --- !u!1 &7369156442483548229
 GameObject:
   m_ObjectHideFlags: 0
