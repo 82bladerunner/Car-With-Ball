@@ -9,6 +9,7 @@ public class GameManager : MonoBehaviour
     
     public float levelStartTime { get; private set; }
     public float levelCompletionTime { get; private set; }
+    public int diamondsCollected { get; private set; }
 
     [Header("UI Elements")]
     [SerializeField] private GameObject winPanel;
@@ -16,6 +17,7 @@ public class GameManager : MonoBehaviour
     [SerializeField] private TextMeshProUGUI winText;
     [SerializeField] private TextMeshProUGUI loseText;
     [SerializeField] private TextMeshProUGUI timerText;
+    [SerializeField] private TextMeshProUGUI diamondCountText;
     [SerializeField] private SceneTransition sceneTransition;
 
     private bool isGameOver = false;
@@ -57,8 +59,24 @@ public class GameManager : MonoBehaviour
         Time.timeScale = 1f;
         levelStartTime = Time.time;
         isGameOver = false;
+        diamondsCollected = 0;
+        UpdateDiamondUI();
         if (winPanel != null) winPanel.SetActive(false);
         if (losePanel != null) losePanel.SetActive(false);
+    }
+
+    public void CollectDiamond()
+    {
+        diamondsCollected++;
+        UpdateDiamondUI();
+    }
+
+    private void UpdateDiamondUI()
+    {
+        if (diamondCountText != null)
+        {
+            diamondCountText.text = $"Diamonds: {diamondsCollected}";
+        }
     }
 
     public void CompleteLevel()
@@ -72,9 +90,9 @@ public class GameManager : MonoBehaviour
         // Slow down time
         Time.timeScale = 0.3f;
         
-        // Show win panel
+        // Show win panel with diamonds collected
         winPanel.SetActive(true);
-        winText.text = $"Level Complete!\nTime: {levelCompletionTime:F2}s";
+        winText.text = $"Level Complete!\nTime: {levelCompletionTime:F2}s\nDiamonds: {diamondsCollected}";
     }
 
     public void GameOver()
@@ -89,11 +107,11 @@ public class GameManager : MonoBehaviour
         
         if (losePanel != null)
         {
-            // Show lose panel
+            // Show lose panel with diamonds collected
             losePanel.SetActive(true);
             if (loseText != null)
             {
-                loseText.text = $"You Lost!\nTime: {levelCompletionTime:F2}s\nPress Enter to Restart";
+                loseText.text = $"You Lost!\nTime: {levelCompletionTime:F2}s\nDiamonds: {diamondsCollected}\nPress Enter to Restart";
             }
         }
     }
@@ -147,6 +165,13 @@ public class GameManager : MonoBehaviour
             losePanel = losePanelObj;
             winText = winPanel.GetComponentInChildren<TextMeshProUGUI>();
             loseText = losePanel.GetComponentInChildren<TextMeshProUGUI>();
+        }
+        
+        // Find diamond count text
+        GameObject diamondCountObj = GameObject.Find("DiamondCountText");
+        if (diamondCountObj != null)
+        {
+            diamondCountText = diamondCountObj.GetComponent<TextMeshProUGUI>();
         }
         
         // Hide all panels and restart level
