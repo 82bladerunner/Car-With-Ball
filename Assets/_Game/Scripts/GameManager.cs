@@ -1,6 +1,8 @@
 using UnityEngine;
 using TMPro;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
+using UserInterfaceAmsterdam;
 
 public class GameManager : MonoBehaviour
 {
@@ -13,6 +15,10 @@ public class GameManager : MonoBehaviour
     [Header("UI Elements")]
     [SerializeField] private TextMeshProUGUI timerText;
     [SerializeField] private TextMeshProUGUI diamondCountText;
+    
+    [SerializeField] private UiPanelAnimationAndClickEvents _playButton;
+    [SerializeField] private GameObject _uiPanelsContainer;
+    [SerializeField] private GameObject _gamePanelsContainer;
 
     private bool isGameOver = false;
 
@@ -27,16 +33,11 @@ public class GameManager : MonoBehaviour
         {
             Destroy(gameObject);
         }
-    }
 
-    private void Start()
-    {
-        StartLevel();
-    }
-    
-    private void OnEnable()
-    {
+        _playButton.OnClick += StartLevel;
         SceneManager.sceneLoaded += OnSceneLoaded;
+        _uiPanelsContainer.SetActive(true);
+        _gamePanelsContainer.SetActive(false);
     }
     
     private void Update()
@@ -49,13 +50,16 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    private void OnDisable()
+    private void OnDestroy()
     {
+        _playButton.OnClick -= StartLevel;
         SceneManager.sceneLoaded -= OnSceneLoaded;
     }
 
-    public void StartLevel()
+    private void StartLevel()
     {
+        _uiPanelsContainer.SetActive(false);
+        _gamePanelsContainer.SetActive(true);
         Time.timeScale = 1f;
         levelStartTime = Time.time;
         isGameOver = false;
@@ -104,7 +108,5 @@ public class GameManager : MonoBehaviour
     {
         // Reset time scale
         Time.timeScale = 1f;
-      
-        StartLevel();
     }
 } 
