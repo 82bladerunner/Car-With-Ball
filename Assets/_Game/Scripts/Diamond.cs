@@ -77,7 +77,7 @@ public class Diamond : MonoBehaviour
         // Play sound if assigned
         if (collectSound != null)
         {
-            AudioSource.PlayClipAtPoint(collectSound, transform.position);
+            AudioSource.PlayClipAtPoint(collectSound, transform.position, 2f); // Play at double volume
         }
 
         // Destroy the diamond

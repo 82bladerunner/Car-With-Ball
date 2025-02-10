@@ -90,13 +90,15 @@ public class PrometeoCarController : MonoBehaviour
     //SOUNDS
 
       [Space(20)]
-      //[Header("Sounds")]
+      [Header("Sounds")]
       [Space(10)]
       //The following variable lets you to set up sounds for your car such as the car engine or tire screech sounds.
-      public bool useSounds = false;
+      public bool useSounds = true;
       public AudioSource carEngineSound; // This variable stores the sound of the car engine.
       public AudioSource tireScreechSound; // This variable stores the sound of the tire screech (when the car is drifting).
-      float initialCarEngineSoundPitch; // Used to store the initial pitch of the car engine sound.
+      private float engineBasePitch = 1f;
+      private float engineBaseVolume = 0.3f;
+      private bool wasUsingSounds = false;  // Track previous sound state
 
     //CONTROLS
 
@@ -206,9 +208,22 @@ public class PrometeoCarController : MonoBehaviour
         RRwheelFriction.asymptoteValue = rearRightCollider.sidewaysFriction.asymptoteValue;
         RRwheelFriction.stiffness = rearRightCollider.sidewaysFriction.stiffness;
 
-        // We save the initial pitch of the car engine sound.
-        if(carEngineSound != null){
-          initialCarEngineSoundPitch = carEngineSound.pitch;
+        // Setup engine sound
+        if (carEngineSound != null)
+        {
+            carEngineSound.loop = true;
+            carEngineSound.playOnAwake = false;
+            carEngineSound.volume = 0f;  // Start silent
+            carEngineSound.pitch = engineBasePitch;
+            carEngineSound.Play();  // Start playing but at 0 volume
+        }
+
+        // Setup tire screech sound
+        if (tireScreechSound != null)
+        {
+            tireScreechSound.loop = true;
+            tireScreechSound.playOnAwake = false;
+            tireScreechSound.volume = 0f;
         }
 
         // We invoke 2 methods inside this script. CarSpeedUI() changes the text of the UI object that stores
@@ -279,6 +294,24 @@ public class PrometeoCarController : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        // Check if sound state changed
+        if (wasUsingSounds != useSounds)
+        {
+            wasUsingSounds = useSounds;
+            if (!useSounds)
+            {
+                // Fade out sounds when disabled
+                if (carEngineSound != null)
+                {
+                    carEngineSound.volume = 0f;
+                }
+                if (tireScreechSound != null)
+                {
+                    tireScreechSound.volume = 0f;
+                    tireScreechSound.Stop();
+                }
+            }
+        }
 
       //CAR DATA
 
@@ -425,32 +458,40 @@ public class PrometeoCarController : MonoBehaviour
     // the pitch of the sound will be the sum of the initial pitch + the car speed divided by 100f.
     // Apart from that, the tireScreechSound will play whenever the car starts drifting or losing traction.
     public void CarSounds(){
+      if (!useSounds) return;
 
-      if(useSounds){
-        try{
-          if(carEngineSound != null){
-            float engineSoundPitch = initialCarEngineSoundPitch + (Mathf.Abs(carRigidbody.velocity.magnitude) / 25f);
-            carEngineSound.pitch = engineSoundPitch;
-          }
-          if((isDrifting) || (isTractionLocked && Mathf.Abs(carSpeed) > 12f)){
-            if(!tireScreechSound.isPlaying){
-              tireScreechSound.Play();
-            }
-          }else if((!isDrifting) && (!isTractionLocked || Mathf.Abs(carSpeed) < 12f)){
-            tireScreechSound.Stop();
-          }
-        }catch(Exception ex){
-          Debug.LogWarning(ex);
-        }
-      }else if(!useSounds){
-        if(carEngineSound != null && carEngineSound.isPlaying){
-          carEngineSound.Stop();
-        }
-        if(tireScreechSound != null && tireScreechSound.isPlaying){
-          tireScreechSound.Stop();
-        }
+      // Handle engine sound
+      if (carEngineSound != null)
+      {
+          // Calculate engine pitch based on car speed
+          float speedFactor = Mathf.Abs(carSpeed) / maxSpeed;
+          carEngineSound.pitch = Mathf.Lerp(engineBasePitch, engineBasePitch * 2f, speedFactor);
+          
+          // Calculate engine volume
+          float targetVolume = Mathf.Lerp(engineBaseVolume, 0.8f, speedFactor);
+          carEngineSound.volume = Mathf.Lerp(carEngineSound.volume, targetVolume, Time.deltaTime * 5f);
       }
 
+      // Handle tire screech sound
+      if (tireScreechSound != null)
+      {
+          if (isDrifting || (isTractionLocked && Mathf.Abs(carSpeed) > 10f))
+          {
+              if (!tireScreechSound.isPlaying)
+              {
+                  tireScreechSound.Play();
+              }
+              tireScreechSound.volume = Mathf.Lerp(tireScreechSound.volume, 0.5f, Time.deltaTime * 10f);
+          }
+          else
+          {
+              tireScreechSound.volume = Mathf.Lerp(tireScreechSound.volume, 0f, Time.deltaTime * 10f);
+              if (tireScreechSound.volume < 0.01f)
+              {
+                  tireScreechSound.Stop();
+              }
+          }
+      }
     }
 
     //
@@ -552,7 +593,7 @@ public class PrometeoCarController : MonoBehaviour
       if(localVelocityZ < -1f){
         Brakes();
       }else{
-        if(Mathf.RoundToInt(carSpeed) < maxSpeed){
+        if(Math.Round(carSpeed) < maxSpeed){
           //Apply positive torque in all wheels to go forward if maxSpeed has not been reached.
           frontLeftCollider.brakeTorque = 0;
           frontLeftCollider.motorTorque = (accelerationMultiplier * 50f) * throttleAxis * frontWheelDriveFactor;
@@ -596,7 +637,7 @@ public class PrometeoCarController : MonoBehaviour
       if(localVelocityZ > 1f){
         Brakes();
       }else{
-        if(Mathf.Abs(Mathf.RoundToInt(carSpeed)) < maxReverseSpeed){
+        if(Math.Abs(Math.Round(carSpeed)) < maxReverseSpeed){
           //Apply negative torque in all wheels to go in reverse if maxReverseSpeed has not been reached.
           frontLeftCollider.brakeTorque = 0;
           frontLeftCollider.motorTorque = (accelerationMultiplier * 50f) * throttleAxis * frontWheelDriveFactor;
