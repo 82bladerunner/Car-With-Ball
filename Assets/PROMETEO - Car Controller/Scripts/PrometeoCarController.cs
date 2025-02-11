@@ -94,11 +94,7 @@ public class PrometeoCarController : MonoBehaviour
       [Space(10)]
       //The following variable lets you to set up sounds for your car such as the car engine or tire screech sounds.
       public bool useSounds = true;
-      public AudioSource carEngineSound; // This variable stores the sound of the car engine.
-      public AudioSource tireScreechSound; // This variable stores the sound of the tire screech (when the car is drifting).
-      private float engineBasePitch = 1f;
-      private float engineBaseVolume = 0.3f;
-      private bool wasUsingSounds = false;  // Track previous sound state
+      private CarAudioManager audioManager;
 
     //CONTROLS
 
@@ -126,6 +122,8 @@ public class PrometeoCarController : MonoBehaviour
       public bool isDrifting; // Used to know whether the car is drifting or not.
       [HideInInspector]
       public bool isTractionLocked; // Used to know whether the traction of the car is locked or not.
+      [HideInInspector]
+      public float ThrottleInput { get { return throttleAxis; } } // Expose throttle input for audio
 
     //PRIVATE VARIABLES
 
@@ -176,6 +174,9 @@ public class PrometeoCarController : MonoBehaviour
       carRigidbody = gameObject.GetComponent<Rigidbody>();
       carRigidbody.centerOfMass = bodyMassCenter;
 
+      // Get audio manager reference
+      audioManager = GetComponent<CarAudioManager>();
+
       //Initial setup to calculate the drift value of the car. This part could look a bit
       //complicated, but do not be afraid, the only thing we're doing here is to save the default
       //friction values of the car wheels so we can set an appropiate drifting value later.
@@ -207,46 +208,6 @@ public class PrometeoCarController : MonoBehaviour
         RRwheelFriction.asymptoteSlip = rearRightCollider.sidewaysFriction.asymptoteSlip;
         RRwheelFriction.asymptoteValue = rearRightCollider.sidewaysFriction.asymptoteValue;
         RRwheelFriction.stiffness = rearRightCollider.sidewaysFriction.stiffness;
-
-        // Setup engine sound
-        if (carEngineSound != null)
-        {
-            carEngineSound.loop = true;
-            carEngineSound.playOnAwake = false;
-            carEngineSound.volume = 0f;  // Start silent
-            carEngineSound.pitch = engineBasePitch;
-            carEngineSound.Play();  // Start playing but at 0 volume
-        }
-
-        // Setup tire screech sound
-        if (tireScreechSound != null)
-        {
-            tireScreechSound.loop = true;
-            tireScreechSound.playOnAwake = false;
-            tireScreechSound.volume = 0f;
-        }
-
-        // We invoke 2 methods inside this script. CarSpeedUI() changes the text of the UI object that stores
-        // the speed of the car and CarSounds() controls the engine and drifting sounds. Both methods are invoked
-        // in 0 seconds, and repeatedly called every 0.1 seconds.
-        if(useUI){
-          InvokeRepeating("CarSpeedUI", 0f, 0.1f);
-        }else if(!useUI){
-          if(carSpeedText != null){
-            carSpeedText.text = "0";
-          }
-        }
-
-        if(useSounds){
-          InvokeRepeating("CarSounds", 0f, 0.1f);
-        }else if(!useSounds){
-          if(carEngineSound != null){
-            carEngineSound.Stop();
-          }
-          if(tireScreechSound != null){
-            tireScreechSound.Stop();
-          }
-        }
 
         if(!useEffects){
           if(RLWParticleSystem != null){
@@ -294,23 +255,10 @@ public class PrometeoCarController : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        // Check if sound state changed
-        if (wasUsingSounds != useSounds)
+        // Update car audio state
+        if (audioManager != null)
         {
-            wasUsingSounds = useSounds;
-            if (!useSounds)
-            {
-                // Fade out sounds when disabled
-                if (carEngineSound != null)
-                {
-                    carEngineSound.volume = 0f;
-                }
-                if (tireScreechSound != null)
-                {
-                    tireScreechSound.volume = 0f;
-                    tireScreechSound.Stop();
-                }
-            }
+            audioManager.EnableSounds(useSounds);
         }
 
       //CAR DATA
@@ -439,6 +387,14 @@ public class PrometeoCarController : MonoBehaviour
       }
     }
 
+    void OnDisable()
+    {
+        if (audioManager != null)
+        {
+            audioManager.EnableSounds(false);
+        }
+    }
+
     // This method converts the car speed data from float to string, and then set the text of the UI carSpeedText with this value.
     public void CarSpeedUI(){
 
@@ -451,47 +407,6 @@ public class PrometeoCarController : MonoBehaviour
           }
       }
 
-    }
-
-    // This method controls the car sounds. For example, the car engine will sound slow when the car speed is low because the
-    // pitch of the sound will be at its lowest point. On the other hand, it will sound fast when the car speed is high because
-    // the pitch of the sound will be the sum of the initial pitch + the car speed divided by 100f.
-    // Apart from that, the tireScreechSound will play whenever the car starts drifting or losing traction.
-    public void CarSounds(){
-      if (!useSounds) return;
-
-      // Handle engine sound
-      if (carEngineSound != null)
-      {
-          // Calculate engine pitch based on car speed
-          float speedFactor = Mathf.Abs(carSpeed) / maxSpeed;
-          carEngineSound.pitch = Mathf.Lerp(engineBasePitch, engineBasePitch * 2f, speedFactor);
-          
-          // Calculate engine volume
-          float targetVolume = Mathf.Lerp(engineBaseVolume, 0.8f, speedFactor);
-          carEngineSound.volume = Mathf.Lerp(carEngineSound.volume, targetVolume, Time.deltaTime * 5f);
-      }
-
-      // Handle tire screech sound
-      if (tireScreechSound != null)
-      {
-          if (isDrifting || (isTractionLocked && Mathf.Abs(carSpeed) > 10f))
-          {
-              if (!tireScreechSound.isPlaying)
-              {
-                  tireScreechSound.Play();
-              }
-              tireScreechSound.volume = Mathf.Lerp(tireScreechSound.volume, 0.5f, Time.deltaTime * 10f);
-          }
-          else
-          {
-              tireScreechSound.volume = Mathf.Lerp(tireScreechSound.volume, 0f, Time.deltaTime * 10f);
-              if (tireScreechSound.volume < 0.01f)
-              {
-                  tireScreechSound.Stop();
-              }
-          }
-      }
     }
 
     //
@@ -883,6 +798,15 @@ public class PrometeoCarController : MonoBehaviour
             // Remove any unnecessary components from ghost car
             Destroy(ghostCar.GetComponent<PrometeoCarController>());
             Destroy(ghostCar.GetComponent<Rigidbody>());
+            Destroy(ghostCar.GetComponent<CarAudioManager>());  // Remove audio manager
+            
+            // Remove all AudioSource components
+            foreach (AudioSource audioSource in ghostCar.GetComponentsInChildren<AudioSource>())
+            {
+                Destroy(audioSource);
+            }
+            
+            // Remove all colliders
             foreach (Collider col in ghostCar.GetComponentsInChildren<Collider>())
             {
                 Destroy(col);

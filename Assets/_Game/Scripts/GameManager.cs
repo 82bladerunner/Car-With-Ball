@@ -96,13 +96,7 @@ public class GameManager : MonoBehaviour
         diamondsCollected = 0;
         UpdateDiamondUI();
 
-        // Enable car sounds with a slight delay to ensure proper initialization
-        StartCoroutine(EnableCarSoundsDelayed());
-    }
-
-    private IEnumerator EnableCarSoundsDelayed()
-    {
-        yield return new WaitForSeconds(0.1f);
+        // Enable car controller and sounds
         PrometeoCarController carController = FindObjectOfType<PrometeoCarController>();
         if (carController != null)
         {

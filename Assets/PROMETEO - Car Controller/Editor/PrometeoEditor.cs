@@ -57,12 +57,11 @@ public class PrometeoEditor : Editor{
   private SerializedProperty carSpeedText;
   //
   //
-  //SPEED TEXT (UI) VARIABLES
+  //SOUND VARIABLES
   //
   //
   private SerializedProperty useSounds;
-  private SerializedProperty carEngineSound;
-  private SerializedProperty tireScreechSound;
+  private SerializedProperty audioManager;
   //
   //
   //TOUCH CONTROLS VARIABLES
@@ -108,8 +107,7 @@ public class PrometeoEditor : Editor{
     carSpeedText = SO.FindProperty("carSpeedText");
 
     useSounds = SO.FindProperty("useSounds");
-    carEngineSound = SO.FindProperty("carEngineSound");
-    tireScreechSound = SO.FindProperty("tireScreechSound");
+    audioManager = SO.FindProperty("audioManager");
 
     useTouchControls = SO.FindProperty("useTouchControls");
     throttleButton = SO.FindProperty("throttleButton");
@@ -213,13 +211,11 @@ public class PrometeoEditor : Editor{
     GUILayout.Label("SOUNDS", EditorStyles.boldLabel);
     GUILayout.Space(10);
 
-    useSounds.boolValue = EditorGUILayout.BeginToggleGroup("Use sounds (car sounds)?", useSounds.boolValue);
-    GUILayout.Space(10);
-
-        EditorGUILayout.PropertyField(carEngineSound, new GUIContent("Car Engine Sound: "));
-        EditorGUILayout.PropertyField(tireScreechSound, new GUIContent("Tire Screech Sound: "));
-
-    EditorGUILayout.EndToggleGroup();
+    EditorGUILayout.PropertyField(useSounds, new GUIContent("Use Car Sounds"));
+    if (useSounds.boolValue)
+    {
+        EditorGUILayout.PropertyField(audioManager, new GUIContent("Audio Manager"));
+    }
 
     //
     //
