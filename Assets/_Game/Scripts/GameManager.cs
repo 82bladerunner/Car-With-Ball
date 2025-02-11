@@ -160,7 +160,7 @@ public class GameManager : MonoBehaviour
         Debug.Log($"Level completed in: {levelCompletionTime:F2} seconds");
         
         // Show game end panel
-        ShowGameEndPanel("Level Complete!", true);
+        ShowGameEndPanel(true);
         
         // Slow down time
         Time.timeScale = 0.3f;
@@ -174,20 +174,19 @@ public class GameManager : MonoBehaviour
         levelCompletionTime = Time.time - levelStartTime;
         
         // Show game end panel
-        ShowGameEndPanel("Game Over!", false);
+        ShowGameEndPanel(false);
         
         // Slow down time
         Time.timeScale = 0.3f;
     }
 
-    private void ShowGameEndPanel(string headerText, bool isVictory)
+    private void ShowGameEndPanel(bool isVictory)
     {
         // Create the message with different content based on victory/game over
         string message;
         if (isVictory)
         {
-            message = $"<size=60>{headerText}</size>\n\n" +
-                      $"Congratulations!\n\n" +
+            message = $"You successfully delivered the beach ball to its destination. Precision, control, and skill paid off.\n\nReady for another challenge?\n" +
                       $"Time: {levelCompletionTime:F2}s\n" +
                       $"Diamonds Collected: {diamondsCollected}";
             _winPanel.SetActive(true);
@@ -195,7 +194,7 @@ public class GameManager : MonoBehaviour
         }
         else
         {
-            message = $"<size=60>{headerText}</size>\n\n" +
+            message = $"The ball has fallen, and the challenge is over this time. Stay sharp, adjust your strategy, and try again.\n\nYou can do this!\n" +
                       $"Time Survived: {levelCompletionTime:F2}s\n" +
                       $"Diamonds Collected: {diamondsCollected}";
             _losePanel.SetActive(true);
