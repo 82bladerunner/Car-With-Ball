@@ -1,9 +1,8 @@
+using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
-using UserInterfaceAmsterdam;
-using System.Collections;
 
 public class GameManager : MonoBehaviour
 {
@@ -13,23 +12,25 @@ public class GameManager : MonoBehaviour
     public float levelCompletionTime { get; private set; }
     public int diamondsCollected { get; private set; }
 
-    [Header("UI Elements")]
+    [Header("UI Elements")] 
     [SerializeField] private TextMeshProUGUI timerText;
     [SerializeField] private TextMeshProUGUI diamondCountText;
+    [SerializeField] private List<Button> _quitButtons;
+    [SerializeField] private List<Button> _restartButtons;
+    [SerializeField] private List<Button> _playButtons;
+    [SerializeField] private Button _giveFeedbackButton;
     
-    [SerializeField] private UiPanelAnimationAndClickEvents _playButton;
-    [SerializeField] private GameObject _uiPanelsContainer;
-    [SerializeField] private GameObject _gamePanelsContainer;
-    [SerializeField] private GameObject _gameEndPanel;
-    [SerializeField] private TextMeshProUGUI _gameEndText;
-    [SerializeField] private Image _gameEndBackground;  // Reference to panel background
+    [SerializeField] private GameObject _winPanel;
+    [SerializeField] private GameObject _losePanel;
+    [SerializeField] private GameObject _mainMenuPanel;
+    [SerializeField] private GameObject _welcomePanel;
     
-    [Header("End Game Colors")]
-    [SerializeField] private Color victoryColor = new Color(0, 0.6f, 0, 0.9f);  // Green tint
-    [SerializeField] private Color gameOverColor = new Color(0.6f, 0, 0, 0.9f);  // Red tint
-
+    [SerializeField] private TextMeshProUGUI _winPanelText;
+    [SerializeField] private TextMeshProUGUI _losePanelText;
+    
     private bool isGameOver = false;
     private bool canRestart = false;
+    private bool isPaused = false;
 
     private void Awake()
     {
@@ -53,11 +54,37 @@ public class GameManager : MonoBehaviour
             carController.useSounds = false;
         }
 
-        _playButton.OnClick += StartLevel;
+        foreach (var quitButton in _quitButtons)
+        {
+            quitButton.onClick.AddListener(() =>
+            {
+                Application.Quit();
+            });
+        }
+        
+        foreach (var restartButton in _restartButtons)
+        {
+            restartButton.onClick.AddListener(() =>
+            {
+                RestartGame();
+            });
+        }
+        
+        foreach (var playButton in _playButtons)
+        {
+            playButton.onClick.AddListener(() =>
+            {
+                _mainMenuPanel.SetActive(false);
+                StartLevel();
+            });
+        }
+        
+        _welcomePanel.SetActive(true);
         SceneManager.sceneLoaded += OnSceneLoaded;
-        _uiPanelsContainer.SetActive(true);
-        _gamePanelsContainer.SetActive(false);
-        if (_gameEndPanel != null) _gameEndPanel.SetActive(false);
+        _giveFeedbackButton.onClick.AddListener(() =>
+        {
+            Application.OpenURL("https://google.com");
+        });
     }
     
     private void Update()
@@ -70,30 +97,36 @@ public class GameManager : MonoBehaviour
         }
 
         // Check for restart input when game is over
-        if (canRestart && Input.GetKeyDown(KeyCode.Return))
+        if (Input.GetKeyDown(KeyCode.Escape))
         {
-            RestartGame();
+            ShowMainMenu();
         }
     }
 
     private void OnDestroy()
     {
-        _playButton.OnClick -= StartLevel;
         SceneManager.sceneLoaded -= OnSceneLoaded;
+    }
+    
+    private void ShowMainMenu()
+    {
+        _mainMenuPanel.SetActive(true);
+        Time.timeScale = 0f;
+        isPaused = true;
     }
 
     private void StartLevel()
     {
-        _uiPanelsContainer.SetActive(false);
-        _gamePanelsContainer.SetActive(true);
-        if (_gameEndPanel != null) _gameEndPanel.SetActive(false);
-        
         // Start the game
         Time.timeScale = 1f;
-        levelStartTime = Time.time;
+        if (!isPaused)
+        {
+            levelStartTime = Time.time;
+            diamondsCollected = 0;
+        }
         isGameOver = false;
         canRestart = false;
-        diamondsCollected = 0;
+        isPaused = false;
         UpdateDiamondUI();
 
         // Enable car controller and sounds
@@ -149,50 +182,26 @@ public class GameManager : MonoBehaviour
 
     private void ShowGameEndPanel(string headerText, bool isVictory)
     {
-        if (_gameEndPanel != null && _gameEndText != null)
+        // Create the message with different content based on victory/game over
+        string message;
+        if (isVictory)
         {
-            _gameEndPanel.SetActive(true);
-
-            // Set appropriate background color
-            if (_gameEndBackground != null)
-            {
-                _gameEndBackground.color = isVictory ? victoryColor : gameOverColor;
-            }
-
-            // Create the message with different content based on victory/game over
-            string message;
-            if (isVictory)
-            {
-                message = $"<size=60>{headerText}</size>\n\n" +
-                         $"Congratulations!\n\n" +
-                         $"Time: {levelCompletionTime:F2}s\n" +
-                         $"Diamonds Collected: {diamondsCollected}";
-            }
-            else
-            {
-                message = $"<size=60>{headerText}</size>\n\n" +
-                         $"Time Survived: {levelCompletionTime:F2}s\n" +
-                         $"Diamonds Collected: {diamondsCollected}";
-            }
-            
-            _gameEndText.text = message;
-            
-            // Enable restart after a short delay
-            StartCoroutine(EnableRestart(1f, isVictory));
+            message = $"<size=60>{headerText}</size>\n\n" +
+                      $"Congratulations!\n\n" +
+                      $"Time: {levelCompletionTime:F2}s\n" +
+                      $"Diamonds Collected: {diamondsCollected}";
+            _winPanel.SetActive(true);
+            _winPanelText.text = message;
         }
-    }
-
-    private System.Collections.IEnumerator EnableRestart(float delay, bool isVictory)
-    {
-        yield return new WaitForSecondsRealtime(delay);
-        canRestart = true;
-        if (_gameEndText != null)
+        else
         {
-            string restartText = isVictory ? 
-                "\n\n<color=#FFEB04>Press ENTER to play again!</color>" : 
-                "\n\n<color=#FFEB04>Press ENTER to try again!</color>";
-            _gameEndText.text += restartText;
+            message = $"<size=60>{headerText}</size>\n\n" +
+                      $"Time Survived: {levelCompletionTime:F2}s\n" +
+                      $"Diamonds Collected: {diamondsCollected}";
+            _losePanel.SetActive(true);
+            _losePanelText.text = message;
         }
+
     }
 
     private void RestartGame()
@@ -204,12 +213,8 @@ public class GameManager : MonoBehaviour
     {
         // Freeze game on scene load
         Time.timeScale = 0f;
+        timerText.text = "Time: 0.00";
         
-        // Show main menu
-        if (_uiPanelsContainer != null) _uiPanelsContainer.SetActive(true);
-        if (_gamePanelsContainer != null) _gamePanelsContainer.SetActive(false);
-        if (_gameEndPanel != null) _gameEndPanel.SetActive(false);
-
         // Disable car sounds
         PrometeoCarController carController = FindObjectOfType<PrometeoCarController>();
         if (carController != null)
